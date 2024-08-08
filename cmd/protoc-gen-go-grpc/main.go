@@ -42,10 +42,11 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
-const version = "1.5.1"
+const version = "1.5.2"
 
 var requireUnimplemented *bool
 var useGenericStreams *bool
+var exportConcreteClientInterfaces *bool
 
 func main() {
 	showVersion := flag.Bool("version", false, "print the version and exit")
@@ -58,6 +59,7 @@ func main() {
 	var flags flag.FlagSet
 	requireUnimplemented = flags.Bool("require_unimplemented_servers", true, "set to false to match legacy behavior")
 	useGenericStreams = flags.Bool("use_generic_streams_experimental", true, "set to true to use generic types for streaming client and server objects; this flag is EXPERIMENTAL and may be changed or removed in a future release")
+	exportConcreteClientInterfaces = flags.Bool("export_concrete_client_interfaces", false, "set to true to export concrete client interfaces. the defalut value is false, which supports legacy behavior")
 
 	protogen.Options{
 		ParamFunc: flags.Set,

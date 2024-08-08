@@ -67,14 +67,22 @@ func (serviceGenerateHelper) genFullMethods(g *protogen.GeneratedFile, service *
 }
 
 func (serviceGenerateHelper) generateClientStruct(g *protogen.GeneratedFile, clientName string) {
-	g.P("type ", unexport(clientName), " struct {")
+	if *exportConcreteClientInterfaces {
+		g.P("type ", clientName, "Impl struct {")
+	} else {
+		g.P("type ", unexport(clientName), " struct {")
+	}
 	g.P("cc ", grpcPackage.Ident("ClientConnInterface"))
 	g.P("}")
 	g.P()
 }
 
 func (serviceGenerateHelper) generateNewClientDefinitions(g *protogen.GeneratedFile, service *protogen.Service, clientName string) {
-	g.P("return &", unexport(clientName), "{cc}")
+	if *exportConcreteClientInterfaces {
+		g.P("return &", clientName, "Impl{cc}")
+	} else {
+		g.P("return &", unexport(clientName), "{cc}")
+	}
 }
 
 func (serviceGenerateHelper) generateUnimplementedServerType(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile, service *protogen.Service) {
@@ -361,7 +369,12 @@ func genClientMethod(gen *protogen.Plugin, file *protogen.File, g *protogen.Gene
 	if method.Desc.Options().(*descriptorpb.MethodOptions).GetDeprecated() {
 		g.P(deprecationComment)
 	}
-	g.P("func (c *", unexport(service.GoName), "Client) ", clientSignature(g, method), "{")
+
+	if *exportConcreteClientInterfaces {
+		g.P("func (c *", service.GoName, "ClientImpl) ", clientSignature(g, method), "{")
+	} else {
+		g.P("func (c *", unexport(service.GoName), "Client) ", clientSignature(g, method), "{")
+	}
 	g.P("cOpts := append([]", grpcPackage.Ident("CallOption"), "{", grpcPackage.Ident("StaticMethod()"), "}, opts...)")
 	if !method.Desc.IsStreamingServer() && !method.Desc.IsStreamingClient() {
 		g.P("out := new(", method.Output.GoIdent, ")")
