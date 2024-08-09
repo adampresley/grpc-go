@@ -69,10 +69,11 @@ func (serviceGenerateHelper) genFullMethods(g *protogen.GeneratedFile, service *
 func (serviceGenerateHelper) generateClientStruct(g *protogen.GeneratedFile, clientName string) {
 	if *exportConcreteClientInterfaces {
 		g.P("type ", clientName, "Impl struct {")
+		g.P("CC ", grpcPackage.Ident("ClientConnInterface"))
 	} else {
 		g.P("type ", unexport(clientName), " struct {")
+		g.P("cc ", grpcPackage.Ident("ClientConnInterface"))
 	}
-	g.P("cc ", grpcPackage.Ident("ClientConnInterface"))
 	g.P("}")
 	g.P()
 }
@@ -378,7 +379,11 @@ func genClientMethod(gen *protogen.Plugin, file *protogen.File, g *protogen.Gene
 	g.P("cOpts := append([]", grpcPackage.Ident("CallOption"), "{", grpcPackage.Ident("StaticMethod()"), "}, opts...)")
 	if !method.Desc.IsStreamingServer() && !method.Desc.IsStreamingClient() {
 		g.P("out := new(", method.Output.GoIdent, ")")
-		g.P(`err := c.cc.Invoke(ctx, `, fmSymbol, `, in, out, cOpts...)`)
+		if *exportConcreteClientInterfaces {
+			g.P(`err := c.CC.Invoke(ctx, `, fmSymbol, `, in, out, cOpts...)`)
+		} else {
+			g.P(`err := c.cc.Invoke(ctx, `, fmSymbol, `, in, out, cOpts...)`)
+		}
 		g.P("if err != nil { return nil, err }")
 		g.P("return out, nil")
 		g.P("}")
